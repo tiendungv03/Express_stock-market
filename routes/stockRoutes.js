@@ -8,6 +8,19 @@ router.get("/", async (req, res) => {
   res.json(stocks);
 });
 
+// GET stock by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const stock = await Stock.findById(req.params.id);
+    if (!stock) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+    res.json(stock);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // POST create stock
 router.post("/", async (req, res) => {
   try {
