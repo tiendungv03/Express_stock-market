@@ -1,27 +1,40 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-require("dotenv").config();
+import "dotenv/config";
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import stockRoutes from "./routes/stockRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // Routes
-const stockRoutes = require("./routes/stockRoutes");
-const userRoutes = require("./routes/userRoutes");
-
 app.use("/api/stocks", stockRoutes);
 app.use("/api/users", userRoutes);
 
-// MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB error:", err));
+// ----- Kết nối MongoDB -----
+const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+const port = process.env.PORT || 3000;
 
-// Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (!uri) {
+  console.error("Missing MONGODB_URI (hoặc MONGO_URI) — kiểm tra .env");
+  process.exit(1);
+}
+
+try {
+  await mongoose.connect(uri);
+  console.log("MongoDB connected");
+
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+
+  process.on("SIGINT", async () => {
+    await mongoose.connection.close();
+    process.exit(0);
+  });
+} catch (err) {
+  console.error("MongoDB error:", err);
+  process.exit(1);
+}
